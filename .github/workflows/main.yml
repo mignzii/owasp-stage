@@ -1,0 +1,33 @@
+name: ZAP Security Tests with API Scan
+on:
+  push:
+    branches:
+      - main
+jobs:
+  zap-security-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Install Java
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+    - name: Install ZAP
+      run: |
+        wget -q -O - https://raw.githubusercontent.com/zaproxy/zaproxy/main/ZAP_2.11.0_Linux.tar.gz | tar -xzf - -C $HOME
+        export PATH=$HOME/ZAP_2.11.0:$PATH
+    - name: Install OWASP ZAP API Scan
+      run: |
+        wget https://github.com/zaproxy/zap-api-python/releases/download/v0.6.0/zap-api-python-0.6.0.tar.gz
+        tar -xzf zap-api-python-0.6.0.tar.gz
+        cd zap-api-python-0.6.0
+        python3 setup.py install
+    - name: Run ZAP security tests with API Scan
+      run: |
+        python3 zap-api-scan.py -t http://localhost:3000 -f zap-report.html
+    - name: Upload report artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: zap-report
+        path: zap-report.html
